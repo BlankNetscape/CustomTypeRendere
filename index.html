@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Draw</title>
+</head>
+<body>
+    <form action="" id="mainForm" onsubmit="foo(); return false">
+        <label>INPUT: </label>
+        <input type="text" name="userInput" placeholder="Enter text..">
+        <span hidden>
+            <span>PARSED: </span><span></span>
+        </span>
+        <br>
+        <div style="margin-top: 5px; width: 900px; display: flex; justify-content: space-between;">
+            <div>
+                <input type="submit" id="run" value="Run" disabled>      
+                <input type="button" name="clear" value="Clear" onclick="clearInput();">
+                <input type="file" id="upload"/>
+            </div>
+            <input type="button" name="learn" value="Learn" onclick="location.href='learn.html'">
+        </div>
+    </form>
+    <div>
+        <canvas id="cnv" width="900px" height="600px" style="margin-top: 10px; border: 1px solid black;"></canvas>
+        <br>
+        <input type="button" name="clear" value="Clear" onclick="clearCanvas();">
+    </div>
+
+</body>
+<script src="script.js"></script>
+</html>

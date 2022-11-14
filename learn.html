@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn Letters</title>
+    <style>
+        h1 {
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+        body {
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+        }
+        .wrap {
+            width: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        .start , .controlls {
+            width: 100%; 
+            display: flex;
+            justify-content: space-around;
+        }
+        #title {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        p {
+            font-size: larger;
+            font-weight: bold;
+        }
+        [hidden]{
+            display:none;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div id="title">
+            <h1>Learn Mode</h1>
+            <p></p>
+        </div>
+        <canvas id="cnv2" width="300px" height="300px" style="border: 1px solid black; margin-bottom: 10px;"></canvas>
+        <div class="start"><input type="button" id="start" value="Start"></div>
+        <div class="controlls" id="controlls" hidden>
+            <input type="button" id="prev" value="prev">
+            <input type="button" id="clear" value="clear">
+            <input type="button" id="next" value="next">
+            <input type="button" id="save" value="save">
+        </div>
+        <div>
+            <input type="button" name="main" value="Back to main" style="margin-top: 30px;" onclick="location.href='index.html'">
+        </div>
+    </div>
+</body>
+<script>
+    class vector2D{
+        constructor(x, y){
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    //NOTE: VARIABLES
+    const canvas = document.getElementById("cnv2");
+    const ctx = canvas.getContext('2d');
+    const alph_blank = {
+        a: [],
+        b: [],
+        c: [],
+        d: [],
+        e: [],
+        f: [],
+        g: [],
+        h: [],
+        i: [],
+        j: [],
+        k: [],
+        l: [],
+        m: [],
+        n: [],
+        o: [],
+        p: [],
+        q: [],
+        r: [],
+        s: [],
+        t: [],
+        u: [],
+        v: [],
+        w: [],
+        x: [],
+        y: [],
+        z: [],
+        space: [],
+        dash: []
+    }
+    let alph = {};
+    Object.assign(alph, alph_blank);
+    let letters = Object.keys(alph);
+    let letterIndex;
+    let points = [];
+    let canvasFocus = false;
+    let curr = new vector2D(0,0);
+
+    //NOTE: SUBSCRIBE ON EVENTS 
+    canvas.addEventListener("mousemove", function (e) { onMouseMove(e); });
+    canvas.addEventListener("mousedown", function (e) { onMouseClick(e); });
+    canvas.addEventListener("mouseout", function (e) { onMouseOut(e); });
+    document.getElementById("clear").addEventListener("click", ()=>clear())
+    document.getElementById("start").addEventListener("click", ()=>initLearning())
+    document.getElementById("next").addEventListener("click", ()=>next())
+    document.getElementById("prev").addEventListener("click", ()=>prev())
+    document.getElementById("save").addEventListener("click", ()=>save())
+</script>
+<script>
+    //NOTE: RENDER LOOP
+    setInterval(()=>{
+        if(points.length >= 2 && letterIndex < letters.length-1){
+            if(document.getElementById("next").disabled) document.getElementById("next").disabled = false;
+        }else{
+            document.getElementById("next").disabled = true;
+        }
+
+        if( letterIndex > 0 && document.getElementById("prev").disabled) {
+            document.getElementById("prev").disabled = false;
+        }else if(letterIndex == 0 && !document.getElementById("prev").disabled){
+            document.getElementById("prev").disabled = true;
+        }
+
+        if (points.length >= 2 && letterIndex >= letters.length-1){
+            document.getElementById("save").disabled = false;
+        }else if(!document.getElementById("save").disabled){
+            document.getElementById("save").disabled = true;
+        }
+        //
+        ctx.reset();
+        if(points.length == 0) return
+
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        points.forEach(p => {
+            ctx.lineTo(p.x, p.y)
+        });
+        
+        if(canvasFocus) ctx.lineTo(curr.x, curr.y)
+        ctx.stroke();
+
+    }, 1000/60);
+
+    //
+    function initLearning(){
+        clear();
+        document.getElementById("start").hidden = true;
+        document.getElementById("controlls").hidden = false;
+        letterIndex = 0;
+        updateTitle(letters[letterIndex]);
+        document.getElementById("prev").disabled = true;
+        document.getElementById("next").disabled = true;
+        document.getElementById("save").disabled = true;
+    }
+    function stopLearning(){
+        Object.assign(alph, alph_blank);
+        clear();
+        document.getElementById("start").hidden = false;
+        document.getElementById("controlls").hidden = true;
+    }
+
+    function next(){
+        alph[letters[letterIndex]] = points;
+        letterIndex++;
+        clear();
+        points = alph[letters[letterIndex]];
+        updateTitle(letters[letterIndex]);
+    }
+    function prev(){
+        letterIndex--;
+        clear();
+        points = alph[letters[letterIndex]];
+        updateTitle(letters[letterIndex]);
+    }
+
+    function save(){
+        formated_alph = formatLetters(alph);
+        let json = JSON.stringify(formated_alph);
+        console.log(json);
+        download(json, 'json.txt', 'text/plain');
+        stopLearning();
+    }
+
+    function formatLetters(alphabet){
+        let formated_alphabet = {};
+        for (let letterKey in alphabet) {;
+            let minx = alphabet[letterKey][0].x, miny = alphabet[letterKey][0].y;
+            let maxx = alphabet[letterKey][0].x, maxy = alphabet[letterKey][0].y;
+            alphabet[letterKey].forEach(point => {
+                if(point.x <= minx) minx = point.x;
+                if(point.y <= miny) miny = point.y;
+                if(point.x >= maxx) maxx = point.x;
+                if(point.y >= maxy) maxy = point.y;
+            });
+            alphabet[letterKey].forEach(point => {
+                point.x -= minx;
+                point.y -= miny;
+            });
+            formated_alphabet[letterKey] = new Letter(letterKey, alphabet[letterKey], maxx - minx, maxy - miny);
+        }
+        return formated_alphabet;
+    }
+
+    class Letter{
+        constructor(char, path, width, height){
+            this.char = char;
+            this.path = path;
+            this.width = width;
+            this.height = height;
+        }
+    }
+
+    function updateTitle(str){
+        document.getElementById("title").querySelector('p').innerText = str.toUpperCase();
+    }
+    function download(content, fileName, contentType) {
+        var a = document.createElement("a");
+        var file = new Blob([content], {type: contentType});
+        a.href = URL.createObjectURL(file);
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+
+    //NOTE: CLEAR TEMP DATA AND CANVAS CONTENT
+    function clear() {
+        points = [];
+        ctx.reset();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    //NOTE: EVENT CALLBACKS
+    function onMouseClick(e) {
+        if(!canvasFocus) return;
+        points.push(new vector2D(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop));
+    }
+
+    function onMouseMove(e) {
+        canvasFocus = true;
+        curr.x = e.clientX - canvas.offsetLeft;
+        curr.y = e.clientY - canvas.offsetTop;
+    }
+
+    function onMouseOut(e) {
+        canvasFocus = false;
+    }
+    
+</script>
+</html>
